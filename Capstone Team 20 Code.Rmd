@@ -1,0 +1,2315 @@
+---
+title: "Capstone Team 20"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Loading the packages
+```{r Packages}
+library(data.table)
+library(MASS)
+library(metRology)
+library(quantmod)
+library(xts)
+library(moments)
+library(rugarch)
+library(dplyr)
+library(caret)
+library(leaps)
+library(tidyverse)
+library(devtools) # For installing ggbiplot
+# install_github("vqv/ggbiplot") # Installing ggbiplot through devtools
+library(ggbiplot) # For Principal Component Analysis
+```
+
+# Function
+```{r define Date() function}
+DATE <- function(yyyy,mm,dd) {
+  dte  <- as.Date(sprintf("%i-%i-%i",yyyy,mm,dd),format="%Y-%m-%d")
+  return(dte)
+}
+```
+
+## Large Cap
+```{r ARMK}
+# load preproccessed data for a stock
+ARMK <- data.table(fread("ARMK.csv"))
+
+# calculate excess return = monthly return - risk-free rate
+ARMK[,date:=as.Date(date, format = "%m/%d/%Y")]
+ARMK[,excess_return:=return-RF]
+
+# seperate data before 2020 into training data set
+ARMK_training <- subset(ARMK,date<=DATE(2020,01,01))
+
+# regression on training data set on Fama-French 3 Factor model
+reg_ARMK <- lm(excess_return ~ Mkt_RF + SMB + HML, data=ARMK)
+
+# store beta for each stock
+ARMK_beta_MKT <- as.vector(reg_ARMK$coefficients[2])
+ARMK_beta_SMB <- as.vector(reg_ARMK$coefficients[3])
+ARMK_beta_HML <- as.vector(reg_ARMK$coefficients[4])
+
+# use model to predict 2020 excess returns
+ARMK_prediction <- subset(ARMK,date>=DATE(2020,1,1))
+ARMK_pred <- as.data.frame(predict(reg_ARMK,ARMK_prediction,interval="prediction"))
+
+# calculate residual and crMCDe a table for the result
+ARMK_date <- subset(ARMK,date>=DATE(2020,1,1))$date
+ARMK_actual_return <- subset(ARMK,date>=DATE(2020,1,1))$excess_return
+
+ARMK_result <- data.frame(date = ARMK_date,
+                          actual_return = ARMK_actual_return,
+                          predict_return = ARMK_pred$fit)
+
+ARMK_result$residual <- ARMK_result$actual_return - ARMK_result$predict_return
+
+# a table for beta & residual data
+ARMK_parameters <- data.frame(date = ARMK_date,
+                              ticker="ARMK",
+                              beta_MKT=ARMK_beta_MKT,
+                              beta_SMB=ARMK_beta_SMB,
+                              beta_HML=ARMK_beta_HML,
+                              residual=ARMK_result$residual,
+                              marketcap=ARMK_prediction$market_cap)
+```
+
+
+```{r CMG}
+# load preproccessed data for a stock
+CMG <- data.table(fread("CMG.csv"))
+
+# calculate excess return = monthly return - risk-free rate
+CMG[,date:=as.Date(date, format = "%m/%d/%Y")]
+CMG[,excess_return:=return-RF]
+
+# seperate data before 2020 into training data set
+CMG_training <- subset(CMG,date<=DATE(2020,01,01))
+
+# regression on training data set on Fama-French 3 Factor model
+reg_CMG <- lm(excess_return ~ Mkt_RF + SMB + HML, data=CMG)
+
+# store beta for each stock
+CMG_beta_MKT <- as.vector(reg_CMG$coefficients[2])
+CMG_beta_SMB <- as.vector(reg_CMG$coefficients[3])
+CMG_beta_HML <- as.vector(reg_CMG$coefficients[4])
+
+# use model to predict 2020 excess returns
+CMG_prediction <- subset(CMG,date>=DATE(2020,1,1))
+CMG_pred <- as.data.frame(predict(reg_CMG,CMG_prediction,interval="prediction"))
+
+# calculate residual and crMCDe a table for the result
+CMG_date <- subset(CMG,date>=DATE(2020,1,1))$date
+CMG_actual_return <- subset(CMG,date>=DATE(2020,1,1))$excess_return
+
+CMG_result <- data.frame(date = CMG_date,
+                          actual_return = CMG_actual_return,
+                          predict_return = CMG_pred$fit)
+
+CMG_result$residual <- CMG_result$actual_return - CMG_result$predict_return
+
+# a table for beta & residual data
+CMG_parameters <- data.frame(date = CMG_date,
+                              ticker="CMG",
+                              beta_MKT=CMG_beta_MKT,
+                              beta_SMB=CMG_beta_SMB,
+                              beta_HML=CMG_beta_HML,
+                              residual=CMG_result$residual,
+                              marketcap=CMG_prediction$market_cap)
+```
+
+
+```{r DPZ}
+# load preproccessed data for a stock
+DPZ <- data.table(fread("DPZ.csv"))
+
+# calculate excess return = monthly return - risk-free rate
+DPZ[,date:=as.Date(date, format = "%m/%d/%Y")]
+DPZ[,excess_return:=return-RF]
+
+# seperate data before 2020 into training data set
+DPZ_training <- subset(DPZ,date<=DATE(2020,01,01))
+
+# regression on training data set on Fama-French 3 Factor model
+reg_DPZ <- lm(excess_return ~ Mkt_RF + SMB + HML, data=DPZ)
+
+# store beta for each stock
+DPZ_beta_MKT <- as.vector(reg_DPZ$coefficients[2])
+DPZ_beta_SMB <- as.vector(reg_DPZ$coefficients[3])
+DPZ_beta_HML <- as.vector(reg_DPZ$coefficients[4])
+
+# use model to predict 2020 excess returns
+DPZ_prediction <- subset(DPZ,date>=DATE(2020,1,1))
+DPZ_pred <- as.data.frame(predict(reg_DPZ,DPZ_prediction,interval="prediction"))
+
+# calculate residual and crMCDe a table for the result
+DPZ_date <- subset(DPZ,date>=DATE(2020,1,1))$date
+DPZ_actual_return <- subset(DPZ,date>=DATE(2020,1,1))$excess_return
+
+DPZ_result <- data.frame(date = DPZ_date,
+                          actual_return = DPZ_actual_return,
+                          predict_return = DPZ_pred$fit)
+
+DPZ_result$residual <- DPZ_result$actual_return - DPZ_result$predict_return
+
+# a table for beta & residual data
+DPZ_parameters <- data.frame(date=DPZ_date,
+                              ticker="DPZ",
+                              beta_MKT=DPZ_beta_MKT,
+                              beta_SMB=DPZ_beta_SMB,
+                              beta_HML=DPZ_beta_HML,
+                              residual=DPZ_result$residual,
+                              marketcap=DPZ_prediction$market_cap)
+```
+
+
+```{r DRI}
+# load preproccessed data for a stock
+DRI <- data.table(fread("DRI.csv"))
+
+# calculate excess return = monthly return - risk-free rate
+DRI[,date:=as.Date(date, format = "%m/%d/%Y")]
+DRI[,excess_return:=return-RF]
+
+# seperate data before 2020 into training data set
+DRI_training <- subset(DRI,date<=DATE(2020,01,01))
+
+# regression on training data set on Fama-French 3 Factor model
+reg_DRI <- lm(excess_return ~ Mkt_RF + SMB + HML, data=DRI)
+
+# store beta for each stock
+DRI_beta_MKT <- as.vector(reg_DRI$coefficients[2])
+DRI_beta_SMB <- as.vector(reg_DRI$coefficients[3])
+DRI_beta_HML <- as.vector(reg_DRI$coefficients[4])
+
+# use model to predict 2020 excess returns
+DRI_prediction <- subset(DRI,date>=DATE(2020,1,1))
+DRI_pred <- as.data.frame(predict(reg_DRI,DRI_prediction,interval="prediction"))
+
+# calculate residual and crMCDe a table for the result
+DRI_date <- subset(DRI,date>=DATE(2020,1,1))$date
+DRI_actual_return <- subset(DRI,date>=DATE(2020,1,1))$excess_return
+
+DRI_result <- data.frame(date = DRI_date,
+                          actual_return = DRI_actual_return,
+                          predict_return = DRI_pred$fit)
+
+DRI_result$residual <- DRI_result$actual_return - DRI_result$predict_return
+
+# a table for beta & residual data
+DRI_parameters <- data.frame(date=DRI_date,
+                              ticker="DRI",
+                              beta_MKT=DRI_beta_MKT,
+                              beta_SMB=DRI_beta_SMB,
+                              beta_HML=DRI_beta_HML,
+                              residual=DRI_result$residual,
+                              marketcap=DRI_prediction$market_cap)
+```
+
+
+```{r MCD}
+# load preproccessed data for a stock
+MCD <- data.table(fread("MCD.csv"))
+
+# calculate excess return = monthly return - risk-free rate
+MCD[,date:=as.Date(date, format = "%m/%d/%Y")]
+MCD[,excess_return:=return-RF]
+
+# seperate data before 2020 into training data set
+MCD_training <- subset(MCD,date<=DATE(2020,01,01))
+
+# regression on training data set on Fama-French 3 Factor model
+reg_MCD <- lm(excess_return ~ Mkt_RF + SMB + HML, data=MCD)
+
+# store beta for each stock
+MCD_beta_MKT <- as.vector(reg_MCD$coefficients[2])
+MCD_beta_SMB <- as.vector(reg_MCD$coefficients[3])
+MCD_beta_HML <- as.vector(reg_MCD$coefficients[4])
+
+# use model to predict 2020 excess returns
+MCD_prediction <- subset(MCD,date>=DATE(2020,1,1))
+MCD_pred <- as.data.frame(predict(reg_MCD,MCD_prediction,interval="prediction"))
+
+# calculate residual and crMCDe a table for the result
+MCD_date <- subset(MCD,date>=DATE(2020,1,1))$date
+MCD_actual_return <- subset(MCD,date>=DATE(2020,1,1))$excess_return
+
+MCD_result <- data.frame(date = MCD_date,
+                          actual_return = MCD_actual_return,
+                          predict_return = MCD_pred$fit)
+
+MCD_result$residual <- MCD_result$actual_return - MCD_result$predict_return
+
+# a table for beta & residual data
+MCD_parameters <- data.frame(date=MCD_date,
+                              ticker="MCD",
+                              beta_MKT=MCD_beta_MKT,
+                              beta_SMB=MCD_beta_SMB,
+                              beta_HML=MCD_beta_HML,
+                              residual=MCD_result$residual,
+                              marketcap=MCD_prediction$market_cap)
+```
+
+
+```{r QSR}
+# load preproccessed data for a stock
+QSR <- data.table(fread("QSR.csv"))
+
+# calculate excess return = monthly return - risk-free rate
+QSR[,date:=as.Date(date, format = "%m/%d/%Y")]
+QSR[,excess_return:=return-RF]
+
+# seperate data before 2020 into training data set
+QSR_training <- subset(QSR,date<=DATE(2020,01,01))
+
+# regression on training data set on Fama-French 3 Factor model
+reg_QSR <- lm(excess_return ~ Mkt_RF + SMB + HML, data=QSR)
+
+# store beta for each stock
+QSR_beta_MKT <- as.vector(reg_QSR$coefficients[2])
+QSR_beta_SMB <- as.vector(reg_QSR$coefficients[3])
+QSR_beta_HML <- as.vector(reg_QSR$coefficients[4])
+
+# use model to predict 2020 excess returns
+QSR_prediction <- subset(QSR,date>=DATE(2020,1,1))
+QSR_pred <- as.data.frame(predict(reg_QSR,QSR_prediction,interval="prediction"))
+
+# calculate residual and crMCDe a table for the result
+QSR_date <- subset(QSR,date>=DATE(2020,1,1))$date
+QSR_actual_return <- subset(QSR,date>=DATE(2020,1,1))$excess_return
+
+QSR_result <- data.frame(date = QSR_date,
+                          actual_return = QSR_actual_return,
+                          predict_return = QSR_pred$fit)
+
+QSR_result$residual <- QSR_result$actual_return - QSR_result$predict_return
+
+# a table for beta & residual data
+QSR_parameters <- data.frame(date=QSR_date,
+                              ticker="QSR",
+                              beta_MKT=QSR_beta_MKT,
+                              beta_SMB=QSR_beta_SMB,
+                              beta_HML=QSR_beta_HML,
+                              residual=QSR_result$residual,
+                              marketcap=QSR_prediction$market_cap)
+```
+
+```{r SBUX}
+# load preproccessed data for a stock
+SBUX <- data.table(fread("SBUX.csv"))
+
+# calculate excess return = monthly return - risk-free rate
+SBUX[,date:=as.Date(date, format = "%m/%d/%Y")]
+SBUX[,excess_return:=return-RF]
+
+# seperate data before 2020 into training data set
+SBUX_training <- subset(SBUX,date<=DATE(2020,01,01))
+
+# regression on training data set on Fama-French 3 Factor model
+reg_SBUX <- lm(excess_return ~ Mkt_RF + SMB + HML, data=SBUX)
+
+# store beta for each stock
+SBUX_beta_MKT <- as.vector(reg_SBUX$coefficients[2])
+SBUX_beta_SMB <- as.vector(reg_SBUX$coefficients[3])
+SBUX_beta_HML <- as.vector(reg_SBUX$coefficients[4])
+
+# use model to predict 2020 excess returns
+SBUX_prediction <- subset(SBUX,date>=DATE(2020,1,1))
+SBUX_pred <- as.data.frame(predict(reg_SBUX,SBUX_prediction,interval="prediction"))
+
+# calculate residual and crMCDe a table for the result
+SBUX_date <- subset(SBUX,date>=DATE(2020,1,1))$date
+SBUX_actual_return <- subset(SBUX,date>=DATE(2020,1,1))$excess_return
+
+SBUX_result <- data.frame(date = SBUX_date,
+                          actual_return = SBUX_actual_return,
+                          predict_return = SBUX_pred$fit)
+
+SBUX_result$residual <- SBUX_result$actual_return - SBUX_result$predict_return
+
+# a table for beta & residual data
+SBUX_parameters <- data.frame(date=SBUX_date,
+                              ticker="SBUX",
+                              beta_MKT=SBUX_beta_MKT,
+                              beta_SMB=SBUX_beta_SMB,
+                              beta_HML=SBUX_beta_HML,
+                              residual=SBUX_result$residual,
+                              marketcap=SBUX_prediction$market_cap)
+```
+
+
+
+```{r YUM}
+# load preproccessed data for a stock
+YUM <- data.table(fread("YUM.csv"))
+
+# calculate excess return = monthly return - risk-free rate
+YUM[,date:=as.Date(date, format = "%m/%d/%Y")]
+YUM[,excess_return:=return-RF]
+
+# seperate data before 2020 into training data set
+YUM_training <- subset(YUM,date<=DATE(2020,01,01))
+
+# regression on training data set on Fama-French 3 Factor model
+reg_YUM <- lm(excess_return ~ Mkt_RF + SMB + HML, data=YUM)
+
+# store beta for each stock
+YUM_beta_MKT <- as.vector(reg_YUM$coefficients[2])
+YUM_beta_SMB <- as.vector(reg_YUM$coefficients[3])
+YUM_beta_HML <- as.vector(reg_YUM$coefficients[4])
+
+# use model to predict 2020 excess returns
+YUM_prediction <- subset(YUM,date>=DATE(2020,1,1))
+YUM_pred <- as.data.frame(predict(reg_YUM,YUM_prediction,interval="prediction"))
+
+# calculate residual and crMCDe a table for the result
+YUM_date <- subset(YUM,date>=DATE(2020,1,1))$date
+YUM_actual_return <- subset(YUM,date>=DATE(2020,1,1))$excess_return
+
+YUM_result <- data.frame(date = YUM_date,
+                          actual_return = YUM_actual_return,
+                          predict_return = YUM_pred$fit)
+
+YUM_result$residual <- YUM_result$actual_return - YUM_result$predict_return
+
+# a table for beta & residual data
+YUM_parameters <- data.frame(date=YUM_date,
+                              ticker="YUM",
+                              beta_MKT=YUM_beta_MKT,
+                              beta_SMB=YUM_beta_SMB,
+                              beta_HML=YUM_beta_HML,
+                              residual=YUM_result$residual,
+                              marketcap=YUM_prediction$market_cap)
+```
+
+
+```{r YUMC}
+# load preproccessed data for a stock
+YUMC <- data.table(fread("YUMC.csv"))
+
+# calculate excess return = monthly return - risk-free rate
+YUMC[,date:=as.Date(date, format = "%m/%d/%Y")]
+YUMC[,excess_return:=return-RF]
+
+# seperate data before 2020 into training data set
+YUMC_training <- subset(YUMC,date<=DATE(2020,01,01))
+
+# regression on training data set on Fama-French 3 Factor model
+reg_YUMC <- lm(excess_return ~ Mkt_RF + SMB + HML, data=YUMC)
+
+# store beta for each stock
+YUMC_beta_MKT <- as.vector(reg_YUMC$coefficients[2])
+YUMC_beta_SMB <- as.vector(reg_YUMC$coefficients[3])
+YUMC_beta_HML <- as.vector(reg_YUMC$coefficients[4])
+
+# use model to predict 2020 excess returns
+YUMC_prediction <- subset(YUMC,date>=DATE(2020,1,1))
+YUMC_pred <- as.data.frame(predict(reg_YUMC,YUMC_prediction,interval="prediction"))
+
+# calculate residual and crMCDe a table for the result
+YUMC_date <- subset(YUMC,date>=DATE(2020,1,1))$date
+YUMC_actual_return <- subset(YUMC,date>=DATE(2020,1,1))$excess_return
+
+YUMC_result <- data.frame(date = YUMC_date,
+                          actual_return = YUMC_actual_return,
+                          predict_return = YUMC_pred$fit)
+
+YUMC_result$residual <- YUMC_result$actual_return - YUMC_result$predict_return
+
+# a table for beta & residual data
+YUMC_parameters <- data.frame(date=YUMC_date,
+                              ticker="YUMC",
+                              beta_MKT=YUMC_beta_MKT,
+                              beta_SMB=YUMC_beta_SMB,
+                              beta_HML=YUMC_beta_HML,
+                              residual=YUMC_result$residual,
+                              marketcap=YUMC_prediction$market_cap)
+```
+
+```{r Merge all large cap}
+# combine the results into a single table
+Large_Cap <- rbind(ARMK_parameters,CMG_parameters,DPZ_parameters,DRI_parameters,MCD_parameters,
+                 QSR_parameters,SBUX_parameters,YUM_parameters,YUMC_parameters)
+Large_Cap
+```
+
+## Mid Cap
+```{r TXRH}
+# load preproccessed data for a stock
+TXRH <- data.table(fread("TXRH.csv"))
+
+# calculate excess return = monthly return - risk-free rate
+TXRH[,date:=as.Date(date, format = "%m/%d/%Y")]
+TXRH[,excess_return:=return-RF]
+
+# seperate data before 2020 into training data set
+TXRH_training <- subset(TXRH,date<=DATE(2020,01,01))
+
+# regression on training data set on Fama-French 3 Factor model
+reg_TXRH <- lm(excess_return ~ Mkt_RF + SMB + HML, data=TXRH)
+
+# store beta for each stock
+TXRH_beta_MKT <- as.vector(reg_TXRH$coefficients[2])
+TXRH_beta_SMB <- as.vector(reg_TXRH$coefficients[3])
+TXRH_beta_HML <- as.vector(reg_TXRH$coefficients[4])
+
+# use model to predict 2020 excess returns
+TXRH_prediction <- subset(TXRH,date>=DATE(2020,1,1))
+TXRH_pred <- as.data.frame(predict(reg_TXRH,TXRH_prediction,interval="prediction"))
+
+# calculate residual and crMCDe a table for the result
+TXRH_date <- subset(TXRH,date>=DATE(2020,1,1))$date
+TXRH_actual_return <- subset(TXRH,date>=DATE(2020,1,1))$excess_return
+
+TXRH_result <- data.frame(date = TXRH_date,
+                          actual_return = TXRH_actual_return,
+                          predict_return = TXRH_pred$fit)
+
+TXRH_result$residual <- TXRH_result$actual_return - TXRH_result$predict_return
+
+# a table for beta & residual data
+TXRH_parameters <- data.frame(date=TXRH_date,
+                              ticker="TXRH",
+                              beta_MKT=TXRH_beta_MKT,
+                              beta_SMB=TXRH_beta_SMB,
+                              beta_HML=TXRH_beta_HML,
+                              residual=TXRH_result$residual,
+                              marketcap=TXRH_prediction$market_cap)
+```
+
+
+```{r WEN}
+# load preproccessed data for a stock
+WEN <- data.table(fread("WEN.csv"))
+
+# calculate excess return = monthly return - risk-free rate
+WEN[,date:=as.Date(date, format = "%m/%d/%Y")]
+WEN[,excess_return:=return-RF]
+
+# seperate data before 2020 into training data set
+WEN_training <- subset(WEN,date<=DATE(2020,01,01))
+
+# regression on training data set on Fama-French 3 Factor model
+reg_WEN <- lm(excess_return ~ Mkt_RF + SMB + HML, data=WEN)
+
+# store beta for each stock
+WEN_beta_MKT <- as.vector(reg_WEN$coefficients[2])
+WEN_beta_SMB <- as.vector(reg_WEN$coefficients[3])
+WEN_beta_HML <- as.vector(reg_WEN$coefficients[4])
+
+# use model to predict 2020 excess returns
+WEN_prediction <- subset(WEN,date>=DATE(2020,1,1))
+WEN_pred <- as.data.frame(predict(reg_WEN,WEN_prediction,interval="prediction"))
+
+# calculate residual and crMCDe a table for the result
+WEN_date <- subset(WEN,date>=DATE(2020,1,1))$date
+WEN_actual_return <- subset(WEN,date>=DATE(2020,1,1))$excess_return
+
+WEN_result <- data.frame(date = WEN_date,
+                          actual_return = WEN_actual_return,
+                          predict_return = WEN_pred$fit)
+
+WEN_result$residual <- WEN_result$actual_return - WEN_result$predict_return
+
+# a table for beta & residual data
+WEN_parameters <- data.frame(date=WEN_date,
+                              ticker="WEN",
+                              beta_MKT=WEN_beta_MKT,
+                              beta_SMB=WEN_beta_SMB,
+                              beta_HML=WEN_beta_HML,
+                              residual=WEN_result$residual,
+                              marketcap=WEN_prediction$market_cap)
+```
+
+
+```{r SHAK}
+# load preproccessed data for a stock
+SHAK <- data.table(fread("SHAK.csv"))
+
+# calculate excess return = monthly return - risk-free rate
+SHAK[,date:=as.Date(date, format = "%m/%d/%Y")]
+SHAK[,excess_return:=return-RF]
+
+# seperate data before 2020 into training data set
+SHAK_training <- subset(SHAK,date<=DATE(2020,01,01))
+
+# regression on training data set on Fama-French 3 Factor model
+reg_SHAK <- lm(excess_return ~ Mkt_RF + SMB + HML, data=SHAK)
+
+# store beta for each stock
+SHAK_beta_MKT <- as.vector(reg_SHAK$coefficients[2])
+SHAK_beta_SMB <- as.vector(reg_SHAK$coefficients[3])
+SHAK_beta_HML <- as.vector(reg_SHAK$coefficients[4])
+
+# use model to predict 2020 excess returns
+SHAK_prediction <- subset(SHAK,date>=DATE(2020,1,1))
+SHAK_pred <- as.data.frame(predict(reg_SHAK,SHAK_prediction,interval="prediction"))
+
+# calculate residual and crMCDe a table for the result
+SHAK_date <- subset(SHAK,date>=DATE(2020,1,1))$date
+SHAK_actual_return <- subset(SHAK,date>=DATE(2020,1,1))$excess_return
+
+SHAK_result <- data.frame(date = SHAK_date,
+                          actual_return = SHAK_actual_return,
+                          predict_return = SHAK_pred$fit)
+
+SHAK_result$residual <- SHAK_result$actual_return - SHAK_result$predict_return
+
+# a table for beta & residual data
+SHAK_parameters <- data.frame(date=SHAK_date,
+                              ticker="SHAK",
+                              beta_MKT=SHAK_beta_MKT,
+                              beta_SMB=SHAK_beta_SMB,
+                              beta_HML=SHAK_beta_HML,
+                              residual=SHAK_result$residual,
+                              marketcap=SHAK_prediction$market_cap)
+```
+
+
+```{r WING}
+# load preproccessed data for a stock
+WING <- data.table(fread("WING.csv"))
+
+# calculate excess return = monthly return - risk-free rate
+WING[,date:=as.Date(date, format = "%m/%d/%Y")]
+WING[,excess_return:=return-RF]
+
+# seperate data before 2020 into training data set
+WING_training <- subset(WING,date<=DATE(2020,01,01))
+
+# regression on training data set on Fama-French 3 Factor model
+reg_WING <- lm(excess_return ~ Mkt_RF + SMB + HML, data=WING)
+
+# store beta for each stock
+WING_beta_MKT <- as.vector(reg_WING$coefficients[2])
+WING_beta_SMB <- as.vector(reg_WING$coefficients[3])
+WING_beta_HML <- as.vector(reg_WING$coefficients[4])
+
+# use model to predict 2020 excess returns
+WING_prediction <- subset(WING,date>=DATE(2020,1,1))
+WING_pred <- as.data.frame(predict(reg_WING,WING_prediction,interval="prediction"))
+
+# calculate residual and crMCDe a table for the result
+WING_date <- subset(WING,date>=DATE(2020,1,1))$date
+WING_actual_return <- subset(WING,date>=DATE(2020,1,1))$excess_return
+
+WING_result <- data.frame(date = WING_date,
+                          actual_return = WING_actual_return,
+                          predict_return = WING_pred$fit)
+
+WING_result$residual <- WING_result$actual_return - WING_result$predict_return
+
+# a table for beta & residual data
+WING_parameters <- data.frame(date=WING_date,
+                              ticker="WING",
+                              beta_MKT=WING_beta_MKT,
+                              beta_SMB=WING_beta_SMB,
+                              beta_HML=WING_beta_HML,
+                              residual=WING_result$residual,
+                              marketcap=WING_prediction$market_cap)
+```
+
+
+```{r CBRL}
+# load preproccessed data for a stock
+CBRL <- data.table(fread("CBRL.csv"))
+
+# calculate excess return = monthly return - risk-free rate
+CBRL[,date:=as.Date(date, format = "%m/%d/%Y")]
+CBRL[,excess_return:=return-RF]
+
+# seperate data before 2020 into training data set
+CBRL_training <- subset(CBRL,date<=DATE(2020,01,01))
+
+# regression on training data set on Fama-French 3 Factor model
+reg_CBRL <- lm(excess_return ~ Mkt_RF + SMB + HML, data=CBRL)
+
+# store beta for each stock
+CBRL_beta_MKT <- as.vector(reg_CBRL$coefficients[2])
+CBRL_beta_SMB <- as.vector(reg_CBRL$coefficients[3])
+CBRL_beta_HML <- as.vector(reg_CBRL$coefficients[4])
+
+# use model to predict 2020 excess returns
+CBRL_prediction <- subset(CBRL,date>=DATE(2020,1,1))
+CBRL_pred <- as.data.frame(predict(reg_CBRL,CBRL_prediction,interval="prediction"))
+
+# calculate residual and crMCDe a table for the result
+CBRL_date <- subset(CBRL,date>=DATE(2020,1,1))$date
+CBRL_actual_return <- subset(CBRL,date>=DATE(2020,1,1))$excess_return
+
+CBRL_result <- data.frame(date = CBRL_date,
+                          actual_return = CBRL_actual_return,
+                          predict_return = CBRL_pred$fit)
+
+CBRL_result$residual <- CBRL_result$actual_return - CBRL_result$predict_return
+
+# a table for beta & residual data
+CBRL_parameters <- data.frame(date=CBRL_date,
+                              ticker="CBRL",
+                              beta_MKT=CBRL_beta_MKT,
+                              beta_SMB=CBRL_beta_SMB,
+                              beta_HML=CBRL_beta_HML,
+                              residual=CBRL_result$residual,
+                              marketcap=CBRL_prediction$market_cap)
+```
+
+
+```{r CNNE}
+# load preproccessed data for a stock
+CNNE <- data.table(fread("CNNE.csv"))
+
+# calculate excess return = monthly return - risk-free rate
+CNNE[,date:=as.Date(date, format = "%m/%d/%Y")]
+CNNE[,excess_return:=return-RF]
+
+# seperate data before 2020 into training data set
+CNNE_training <- subset(CNNE,date<=DATE(2020,01,01))
+
+# regression on training data set on Fama-French 3 Factor model
+reg_CNNE <- lm(excess_return ~ Mkt_RF + SMB + HML, data=CNNE)
+
+# store beta for each stock
+CNNE_beta_MKT <- as.vector(reg_CNNE$coefficients[2])
+CNNE_beta_SMB <- as.vector(reg_CNNE$coefficients[3])
+CNNE_beta_HML <- as.vector(reg_CNNE$coefficients[4])
+
+# use model to predict 2020 excess returns
+CNNE_prediction <- subset(CNNE,date>=DATE(2020,1,1))
+CNNE_pred <- as.data.frame(predict(reg_CNNE,CNNE_prediction,interval="prediction"))
+
+# calculate residual and crMCDe a table for the result
+CNNE_date <- subset(CNNE,date>=DATE(2020,1,1))$date
+CNNE_actual_return <- subset(CNNE,date>=DATE(2020,1,1))$excess_return
+
+CNNE_result <- data.frame(date = CNNE_date,
+                          actual_return = CNNE_actual_return,
+                          predict_return = CNNE_pred$fit)
+
+CNNE_result$residual <- CNNE_result$actual_return - CNNE_result$predict_return
+
+# a table for beta & residual data
+CNNE_parameters <- data.frame(date=CNNE_date,
+                              ticker="CNNE",
+                              beta_MKT=CNNE_beta_MKT,
+                              beta_SMB=CNNE_beta_SMB,
+                              beta_HML=CNNE_beta_HML,
+                              residual=CNNE_result$residual,
+                              marketcap=CNNE_prediction$market_cap)
+```
+
+
+```{r EAT}
+# load preproccessed data for a stock
+EAT <- data.table(fread("EAT.csv"))
+
+# calculate excess return = monthly return - risk-free rate
+EAT[,date:=as.Date(date, format = "%m/%d/%Y")]
+EAT[,excess_return:=return-RF]
+
+# seperate data before 2020 into training data set
+EAT_training <- subset(EAT,date<=DATE(2020,01,01))
+
+# regression on training data set on Fama-French 3 Factor model
+reg_EAT <- lm(excess_return ~ Mkt_RF + SMB + HML, data=EAT)
+
+# store beta for each stock
+EAT_beta_MKT <- as.vector(reg_EAT$coefficients[2])
+EAT_beta_SMB <- as.vector(reg_EAT$coefficients[3])
+EAT_beta_HML <- as.vector(reg_EAT$coefficients[4])
+
+# use model to predict 2020 excess returns
+EAT_prediction <- subset(EAT,date>=DATE(2020,1,1))
+EAT_pred <- as.data.frame(predict(reg_EAT,EAT_prediction,interval="prediction"))
+
+# calculate residual and crMCDe a table for the result
+EAT_date <- subset(EAT,date>=DATE(2020,1,1))$date
+EAT_actual_return <- subset(EAT,date>=DATE(2020,1,1))$excess_return
+
+EAT_result <- data.frame(date = EAT_date,
+                          actual_return = EAT_actual_return,
+                          predict_return = EAT_pred$fit)
+
+EAT_result$residual <- EAT_result$actual_return - EAT_result$predict_return
+
+# a table for beta & residual data
+EAT_parameters <- data.frame(date=EAT_date,
+                              ticker="EAT",
+                              beta_MKT=EAT_beta_MKT,
+                              beta_SMB=EAT_beta_SMB,
+                              beta_HML=EAT_beta_HML,
+                              residual=EAT_result$residual,
+                              marketcap=EAT_prediction$market_cap)
+```
+
+
+```{r PZZA}
+# load preproccessed data for a stock
+PZZA <- data.table(fread("PZZA.csv"))
+
+# calculate excess return = monthly return - risk-free rate
+PZZA[,date:=as.Date(date, format = "%m/%d/%Y")]
+PZZA[,excess_return:=return-RF]
+
+# seperate data before 2020 into training data set
+PZZA_training <- subset(PZZA,date<=DATE(2020,01,01))
+
+# regression on training data set on Fama-French 3 Factor model
+reg_PZZA <- lm(excess_return ~ Mkt_RF + SMB + HML, data=PZZA)
+
+# store beta for each stock
+PZZA_beta_MKT <- as.vector(reg_PZZA$coefficients[2])
+PZZA_beta_SMB <- as.vector(reg_PZZA$coefficients[3])
+PZZA_beta_HML <- as.vector(reg_PZZA$coefficients[4])
+
+# use model to predict 2020 excess returns
+PZZA_prediction <- subset(PZZA,date>=DATE(2020,1,1))
+PZZA_pred <- as.data.frame(predict(reg_PZZA,PZZA_prediction,interval="prediction"))
+
+# calculate residual and crMCDe a table for the result
+PZZA_date <- subset(PZZA,date>=DATE(2020,1,1))$date
+PZZA_actual_return <- subset(PZZA,date>=DATE(2020,1,1))$excess_return
+
+PZZA_result <- data.frame(date = PZZA_date,
+                          actual_return = PZZA_actual_return,
+                          predict_return = PZZA_pred$fit)
+
+PZZA_result$residual <- PZZA_result$actual_return - PZZA_result$predict_return
+
+# a table for beta & residual data
+PZZA_parameters <- data.frame(date=PZZA_date,
+                              ticker="PZZA",
+                              beta_MKT=PZZA_beta_MKT,
+                              beta_SMB=PZZA_beta_SMB,
+                              beta_HML=PZZA_beta_HML,
+                              residual=PZZA_result$residual,
+                              marketcap=PZZA_prediction$market_cap)
+```
+
+
+```{r JACK}
+# load preproccessed data for a stock
+JACK <- data.table(fread("JACK.csv"))
+
+# calculate excess return = monthly return - risk-free rate
+JACK[,date:=as.Date(date, format = "%m/%d/%Y")]
+JACK[,excess_return:=return-RF]
+
+# seperate data before 2020 into training data set
+JACK_training <- subset(JACK,date<=DATE(2020,01,01))
+
+# regression on training data set on Fama-French 3 Factor model
+reg_JACK <- lm(excess_return ~ Mkt_RF + SMB + HML, data=JACK)
+
+# store beta for each stock
+JACK_beta_MKT <- as.vector(reg_JACK$coefficients[2])
+JACK_beta_SMB <- as.vector(reg_JACK$coefficients[3])
+JACK_beta_HML <- as.vector(reg_JACK$coefficients[4])
+
+# use model to predict 2020 excess returns
+JACK_prediction <- subset(JACK,date>=DATE(2020,1,1))
+JACK_pred <- as.data.frame(predict(reg_JACK,JACK_prediction,interval="prediction"))
+
+# calculate residual and crMCDe a table for the result
+JACK_date <- subset(JACK,date>=DATE(2020,1,1))$date
+JACK_actual_return <- subset(JACK,date>=DATE(2020,1,1))$excess_return
+
+JACK_result <- data.frame(date = JACK_date,
+                          actual_return = JACK_actual_return,
+                          predict_return = JACK_pred$fit)
+
+JACK_result$residual <- JACK_result$actual_return - JACK_result$predict_return
+
+# a table for beta & residual data
+JACK_parameters <- data.frame(date=JACK_date,
+                              ticker="JACK",
+                              beta_MKT=JACK_beta_MKT,
+                              beta_SMB=JACK_beta_SMB,
+                              beta_HML=JACK_beta_HML,
+                              residual=JACK_result$residual,
+                              marketcap=JACK_prediction$market_cap)
+```
+
+
+```{r CAKE}
+# load preproccessed data for a stock
+CAKE <- data.table(fread("CAKE.csv"))
+
+# calculate excess return = monthly return - risk-free rate
+CAKE[,date:=as.Date(date, format = "%m/%d/%Y")]
+CAKE[,excess_return:=return-RF]
+
+# seperate data before 2020 into training data set
+CAKE_training <- subset(CAKE,date<=DATE(2020,01,01))
+
+# regression on training data set on Fama-French 3 Factor model
+reg_CAKE <- lm(excess_return ~ Mkt_RF + SMB + HML, data=CAKE)
+
+# store beta for each stock
+CAKE_beta_MKT <- as.vector(reg_CAKE$coefficients[2])
+CAKE_beta_SMB <- as.vector(reg_CAKE$coefficients[3])
+CAKE_beta_HML <- as.vector(reg_CAKE$coefficients[4])
+
+# use model to predict 2020 excess returns
+CAKE_prediction <- subset(CAKE,date>=DATE(2020,1,1))
+CAKE_pred <- as.data.frame(predict(reg_CAKE,CAKE_prediction,interval="prediction"))
+
+# calculate residual and crMCDe a table for the result
+CAKE_date <- subset(CAKE,date>=DATE(2020,1,1))$date
+CAKE_actual_return <- subset(CAKE,date>=DATE(2020,1,1))$excess_return
+
+CAKE_result <- data.frame(date = CAKE_date,
+                          actual_return = CAKE_actual_return,
+                          predict_return = CAKE_pred$fit)
+
+CAKE_result$residual <- CAKE_result$actual_return - CAKE_result$predict_return
+
+# a table for beta & residual data
+CAKE_parameters <- data.frame(date=CAKE_date,
+                              ticker="CAKE",
+                              beta_MKT=CAKE_beta_MKT,
+                              beta_SMB=CAKE_beta_SMB,
+                              beta_HML=CAKE_beta_HML,
+                              residual=CAKE_result$residual,
+                              marketcap=CAKE_prediction$market_cap)
+```
+
+
+```{r BLMN}
+# load preproccessed data for a stock
+BLMN <- data.table(fread("BLMN.csv"))
+
+# calculate excess return = monthly return - risk-free rate
+BLMN[,date:=as.Date(date, format = "%m/%d/%Y")]
+BLMN[,excess_return:=return-RF]
+
+# seperate data before 2020 into training data set
+BLMN_training <- subset(BLMN,date<=DATE(2020,01,01))
+
+# regression on training data set on Fama-French 3 Factor model
+reg_BLMN <- lm(excess_return ~ Mkt_RF + SMB + HML, data=BLMN)
+
+# store beta for each stock
+BLMN_beta_MKT <- as.vector(reg_BLMN$coefficients[2])
+BLMN_beta_SMB <- as.vector(reg_BLMN$coefficients[3])
+BLMN_beta_HML <- as.vector(reg_BLMN$coefficients[4])
+
+# use model to predict 2020 excess returns
+BLMN_prediction <- subset(BLMN,date>=DATE(2020,1,1))
+BLMN_pred <- as.data.frame(predict(reg_BLMN,BLMN_prediction,interval="prediction"))
+
+# calculate residual and crMCDe a table for the result
+BLMN_date <- subset(BLMN,date>=DATE(2020,1,1))$date
+BLMN_actual_return <- subset(BLMN,date>=DATE(2020,1,1))$excess_return
+
+BLMN_result <- data.frame(date = BLMN_date,
+                          actual_return = BLMN_actual_return,
+                          predict_return = BLMN_pred$fit)
+
+BLMN_result$residual <- BLMN_result$actual_return - BLMN_result$predict_return
+
+# a table for beta & residual data
+BLMN_parameters <- data.frame(date=BLMN_date,
+                              ticker="BLMN",
+                              beta_MKT=BLMN_beta_MKT,
+                              beta_SMB=BLMN_beta_SMB,
+                              beta_HML=BLMN_beta_HML,
+                              residual=BLMN_result$residual,
+                              marketcap=BLMN_prediction$market_cap)
+```
+
+
+```{r PLAY}
+# load preproccessed data for a stock
+PLAY <- data.table(fread("PLAY.csv"))
+
+# calculate excess return = monthly return - risk-free rate
+PLAY[,date:=as.Date(date, format = "%m/%d/%Y")]
+PLAY[,excess_return:=return-RF]
+
+# seperate data before 2020 into training data set
+PLAY_training <- subset(PLAY,date<=DATE(2020,01,01))
+
+# regression on training data set on Fama-French 3 Factor model
+reg_PLAY <- lm(excess_return ~ Mkt_RF + SMB + HML, data=PLAY)
+
+# store beta for each stock
+PLAY_beta_MKT <- as.vector(reg_PLAY$coefficients[2])
+PLAY_beta_SMB <- as.vector(reg_PLAY$coefficients[3])
+PLAY_beta_HML <- as.vector(reg_PLAY$coefficients[4])
+
+# use model to predict 2020 excess returns
+PLAY_prediction <- subset(PLAY,date>=DATE(2020,1,1))
+PLAY_pred <- as.data.frame(predict(reg_PLAY,PLAY_prediction,interval="prediction"))
+
+# calculate residual and crMCDe a table for the result
+PLAY_date <- subset(PLAY,date>=DATE(2020,1,1))$date
+PLAY_actual_return <- subset(PLAY,date>=DATE(2020,1,1))$excess_return
+
+PLAY_result <- data.frame(date = PLAY_date,
+                          actual_return = PLAY_actual_return,
+                          predict_return = PLAY_pred$fit)
+
+PLAY_result$residual <- PLAY_result$actual_return - PLAY_result$predict_return
+
+# a table for beta & residual data
+PLAY_parameters <- data.frame(date=PLAY_date,
+                              ticker="PLAY",
+                              beta_MKT=PLAY_beta_MKT,
+                              beta_SMB=PLAY_beta_SMB,
+                              beta_HML=PLAY_beta_HML,
+                              residual=PLAY_result$residual,
+                              marketcap=PLAY_prediction$market_cap)
+```
+
+
+```{r Merge all mid cap}
+# combine the results into a single table
+Mid_Cap <- rbind(TXRH_parameters,WEN_parameters,SHAK_parameters,CBRL_parameters,CNNE_parameters,
+                 EAT_parameters,PZZA_parameters,JACK_parameters,CAKE_parameters,BLMN_parameters,PLAY_parameters)
+Mid_Cap
+```
+
+## Smalll Cap
+```{r DIN}
+# load preproccessed data for a stock
+DIN <- data.table(fread("DIN.csv"))
+
+# calculate excess return = monthly return - risk-free rate
+DIN[,date:=as.Date(date, format = "%m/%d/%Y")]
+DIN[,excess_return:=return-RF]
+
+# seperate data before 2020 into training data set
+DIN_training <- subset(DIN,date<=DATE(2020,01,01))
+
+# regression on training data set on Fama-French 3 Factor model
+reg_DIN <- lm(excess_return ~ Mkt_RF + SMB + HML, data=DIN)
+
+# store beta for each stock
+DIN_beta_MKT <- as.vector(reg_DIN$coefficients[2])
+DIN_beta_SMB <- as.vector(reg_DIN$coefficients[3])
+DIN_beta_HML <- as.vector(reg_DIN$coefficients[4])
+
+# use model to predict 2020 excess returns
+DIN_prediction <- subset(DIN,date>=DATE(2020,1,1))
+DIN_pred <- as.data.frame(predict(reg_DIN,DIN_prediction,interval="prediction"))
+
+# calculate residual and crMCDe a table for the result
+DIN_date <- subset(DIN,date>=DATE(2020,1,1))$date
+DIN_actual_return <- subset(DIN,date>=DATE(2020,1,1))$excess_return
+
+DIN_result <- data.frame(date = DIN_date,
+                          actual_return = DIN_actual_return,
+                          predict_return = DIN_pred$fit)
+
+DIN_result$residual <- DIN_result$actual_return - DIN_result$predict_return
+
+# a table for beta & residual data
+DIN_parameters <- data.frame(date=DIN_date,
+                              ticker="DIN",
+                              beta_MKT=DIN_beta_MKT,
+                              beta_SMB=DIN_beta_SMB,
+                              beta_HML=DIN_beta_HML,
+                              residual=DIN_result$residual,
+                              marketcap=DIN_prediction$market_cap)
+```
+
+
+```{r BJRI}
+# load preproccessed data for a stock
+BJRI <- data.table(fread("BJRI.csv"))
+
+# calculate excess return = monthly return - risk-free rate
+BJRI[,date:=as.Date(date, format = "%m/%d/%Y")]
+BJRI[,excess_return:=return-RF]
+
+# seperate data before 2020 into training data set
+BJRI_training <- subset(BJRI,date<=DATE(2020,01,01))
+
+# regression on training data set on Fama-French 3 Factor model
+reg_BJRI <- lm(excess_return ~ Mkt_RF + SMB + HML, data=BJRI)
+
+# store beta for each stock
+BJRI_beta_MKT <- as.vector(reg_BJRI$coefficients[2])
+BJRI_beta_SMB <- as.vector(reg_BJRI$coefficients[3])
+BJRI_beta_HML <- as.vector(reg_BJRI$coefficients[4])
+
+# use model to predict 2020 excess returns
+BJRI_prediction <- subset(BJRI,date>=DATE(2020,1,1))
+BJRI_pred <- as.data.frame(predict(reg_BJRI,BJRI_prediction,interval="prediction"))
+
+# calculate residual and crMCDe a table for the result
+BJRI_date <- subset(BJRI,date>=DATE(2020,1,1))$date
+BJRI_actual_return <- subset(BJRI,date>=DATE(2020,1,1))$excess_return
+
+BJRI_result <- data.frame(date = BJRI_date,
+                          actual_return = BJRI_actual_return,
+                          predict_return = BJRI_pred$fit)
+
+BJRI_result$residual <- BJRI_result$actual_return - BJRI_result$predict_return
+
+# a table for beta & residual data
+BJRI_parameters <- data.frame(date=BJRI_date,
+                              ticker="BJRI",
+                              beta_MKT=BJRI_beta_MKT,
+                              beta_SMB=BJRI_beta_SMB,
+                              beta_HML=BJRI_beta_HML,
+                              residual=BJRI_result$residual,
+                              marketcap=BJRI_prediction$market_cap)
+```
+
+
+```{r DENN}
+# load preproccessed data for a stock
+DENN <- data.table(fread("DENN.csv"))
+
+# calculate excess return = monthly return - risk-free rate
+DENN[,date:=as.Date(date, format = "%m/%d/%Y")]
+DENN[,excess_return:=return-RF]
+
+# seperate data before 2020 into training data set
+DENN_training <- subset(DENN,date<=DATE(2020,01,01))
+
+# regression on training data set on Fama-French 3 Factor model
+reg_DENN <- lm(excess_return ~ Mkt_RF + SMB + HML, data=DENN)
+
+# store beta for each stock
+DENN_beta_MKT <- as.vector(reg_DENN$coefficients[2])
+DENN_beta_SMB <- as.vector(reg_DENN$coefficients[3])
+DENN_beta_HML <- as.vector(reg_DENN$coefficients[4])
+
+# use model to predict 2020 excess returns
+DENN_prediction <- subset(DENN,date>=DATE(2020,1,1))
+DENN_pred <- as.data.frame(predict(reg_DENN,DENN_prediction,interval="prediction"))
+
+# calculate residual and crMCDe a table for the result
+DENN_date <- subset(DENN,date>=DATE(2020,1,1))$date
+DENN_actual_return <- subset(DENN,date>=DATE(2020,1,1))$excess_return
+
+DENN_result <- data.frame(date = DENN_date,
+                          actual_return = DENN_actual_return,
+                          predict_return = DENN_pred$fit)
+
+DENN_result$residual <- DENN_result$actual_return - DENN_result$predict_return
+
+# a table for beta & residual data
+DENN_parameters <- data.frame(date=DENN_date,
+                              ticker="DENN",
+                              beta_MKT=DENN_beta_MKT,
+                              beta_SMB=DENN_beta_SMB,
+                              beta_HML=DENN_beta_HML,
+                              residual=DENN_result$residual,
+                              marketcap=DENN_prediction$market_cap)
+```
+
+
+```{r ARCO}
+# load preproccessed data for a stock
+ARCO <- data.table(fread("ARCO.csv"))
+
+# calculate excess return = monthly return - risk-free rate
+ARCO[,date:=as.Date(date, format = "%m/%d/%Y")]
+ARCO[,excess_return:=return-RF]
+
+# seperate data before 2020 into training data set
+ARCO_training <- subset(ARCO,date<=DATE(2020,01,01))
+
+# regression on training data set on Fama-French 3 Factor model
+reg_ARCO <- lm(excess_return ~ Mkt_RF + SMB + HML, data=ARCO)
+
+# store beta for each stock
+ARCO_beta_MKT <- as.vector(reg_ARCO$coefficients[2])
+ARCO_beta_SMB <- as.vector(reg_ARCO$coefficients[3])
+ARCO_beta_HML <- as.vector(reg_ARCO$coefficients[4])
+
+# use model to predict 2020 excess returns
+ARCO_prediction <- subset(ARCO,date>=DATE(2020,1,1))
+ARCO_pred <- as.data.frame(predict(reg_ARCO,ARCO_prediction,interval="prediction"))
+
+# calculate residual and crMCDe a table for the result
+ARCO_date <- subset(ARCO,date>=DATE(2020,1,1))$date
+ARCO_actual_return <- subset(ARCO,date>=DATE(2020,1,1))$excess_return
+
+ARCO_result <- data.frame(date = ARCO_date,
+                          actual_return = ARCO_actual_return,
+                          predict_return = ARCO_pred$fit)
+
+ARCO_result$residual <- ARCO_result$actual_return - ARCO_result$predict_return
+
+# a table for beta & residual data
+ARCO_parameters <- data.frame(date=ARCO_date,
+                              ticker="ARCO",
+                              beta_MKT=ARCO_beta_MKT,
+                              beta_SMB=ARCO_beta_SMB,
+                              beta_HML=ARCO_beta_HML,
+                              residual=ARCO_result$residual,
+                              marketcap=ARCO_prediction$market_cap)
+```
+
+
+```{r CHUY}
+# load preproccessed data for a stock
+CHUY <- data.table(fread("CHUY.csv"))
+
+# calculate excess return = monthly return - risk-free rate
+CHUY[,date:=as.Date(date, format = "%m/%d/%Y")]
+CHUY[,excess_return:=return-RF]
+
+# seperate data before 2020 into training data set
+CHUY_training <- subset(CHUY,date<=DATE(2020,01,01))
+
+# regression on training data set on Fama-French 3 Factor model
+reg_CHUY <- lm(excess_return ~ Mkt_RF + SMB + HML, data=CHUY)
+
+# store beta for each stock
+CHUY_beta_MKT <- as.vector(reg_CHUY$coefficients[2])
+CHUY_beta_SMB <- as.vector(reg_CHUY$coefficients[3])
+CHUY_beta_HML <- as.vector(reg_CHUY$coefficients[4])
+
+# use model to predict 2020 excess returns
+CHUY_prediction <- subset(CHUY,date>=DATE(2020,1,1))
+CHUY_pred <- as.data.frame(predict(reg_CHUY,CHUY_prediction,interval="prediction"))
+
+# calculate residual and crMCDe a table for the result
+CHUY_date <- subset(CHUY,date>=DATE(2020,1,1))$date
+CHUY_actual_return <- subset(CHUY,date>=DATE(2020,1,1))$excess_return
+
+CHUY_result <- data.frame(date = CHUY_date,
+                          actual_return = CHUY_actual_return,
+                          predict_return = CHUY_pred$fit)
+
+CHUY_result$residual <- CHUY_result$actual_return - CHUY_result$predict_return
+
+# a table for beta & residual data
+CHUY_parameters <- data.frame(date=CHUY_date,
+                              ticker="CHUY",
+                              beta_MKT=CHUY_beta_MKT,
+                              beta_SMB=CHUY_beta_SMB,
+                              beta_HML=CHUY_beta_HML,
+                              residual=CHUY_result$residua,
+                              marketcap=CHUY_prediction$market_cap)
+```
+
+
+```{r RUTH}
+# load preproccessed data for a stock
+RUTH <- data.table(fread("RUTH.csv"))
+
+# calculate excess return = monthly return - risk-free rate
+RUTH[,date:=as.Date(date, format = "%m/%d/%Y")]
+RUTH[,excess_return:=return-RF]
+
+# seperate data before 2020 into training data set
+RUTH_training <- subset(RUTH,date<=DATE(2020,01,01))
+
+# regression on training data set on Fama-French 3 Factor model
+reg_RUTH <- lm(excess_return ~ Mkt_RF + SMB + HML, data=RUTH)
+
+# store beta for each stock
+RUTH_beta_MKT <- as.vector(reg_RUTH$coefficients[2])
+RUTH_beta_SMB <- as.vector(reg_RUTH$coefficients[3])
+RUTH_beta_HML <- as.vector(reg_RUTH$coefficients[4])
+
+# use model to predict 2020 excess returns
+RUTH_prediction <- subset(RUTH,date>=DATE(2020,1,1))
+RUTH_pred <- as.data.frame(predict(reg_RUTH,RUTH_prediction,interval="prediction"))
+
+# calculate residual and crMCDe a table for the result
+RUTH_date <- subset(RUTH,date>=DATE(2020,1,1))$date
+RUTH_actual_return <- subset(RUTH,date>=DATE(2020,1,1))$excess_return
+
+RUTH_result <- data.frame(date = RUTH_date,
+                          actual_return = RUTH_actual_return,
+                          predict_return = RUTH_pred$fit)
+
+RUTH_result$residual <- RUTH_result$actual_return - RUTH_result$predict_return
+
+# a table for beta & residual data
+RUTH_parameters <- data.frame(date=RUTH_date,
+                              ticker="RUTH",
+                              beta_MKT=RUTH_beta_MKT,
+                              beta_SMB=RUTH_beta_SMB,
+                              beta_HML=RUTH_beta_HML,
+                              residual=RUTH_result$residual,
+                              marketcap=RUTH_prediction$market_cap)
+```
+
+
+```{r LOCO}
+# load preproccessed data for a stock
+LOCO <- data.table(fread("LOCO.csv"))
+
+# calculate excess return = monthly return - risk-free rate
+LOCO[,date:=as.Date(date, format = "%m/%d/%Y")]
+LOCO[,excess_return:=return-RF]
+
+# seperate data before 2020 into training data set
+LOCO_training <- subset(LOCO,date<=DATE(2020,01,01))
+
+# regression on training data set on Fama-French 3 Factor model
+reg_LOCO <- lm(excess_return ~ Mkt_RF + SMB + HML, data=LOCO)
+
+# store beta for each stock
+LOCO_beta_MKT <- as.vector(reg_LOCO$coefficients[2])
+LOCO_beta_SMB <- as.vector(reg_LOCO$coefficients[3])
+LOCO_beta_HML <- as.vector(reg_LOCO$coefficients[4])
+
+# use model to predict 2020 excess returns
+LOCO_prediction <- subset(LOCO,date>=DATE(2020,1,1))
+LOCO_pred <- as.data.frame(predict(reg_LOCO,LOCO_prediction,interval="prediction"))
+
+# calculate residual and crMCDe a table for the result
+LOCO_date <- subset(LOCO,date>=DATE(2020,1,1))$date
+LOCO_actual_return <- subset(LOCO,date>=DATE(2020,1,1))$excess_return
+
+LOCO_result <- data.frame(date = LOCO_date,
+                          actual_return = LOCO_actual_return,
+                          predict_return = LOCO_pred$fit)
+
+LOCO_result$residual <- LOCO_result$actual_return - LOCO_result$predict_return
+
+# a table for beta & residual data
+LOCO_parameters <- data.frame(date=LOCO_date,
+                              ticker="LOCO",
+                              beta_MKT=LOCO_beta_MKT,
+                              beta_SMB=LOCO_beta_SMB,
+                              beta_HML=LOCO_beta_HML,
+                              residual=LOCO_result$residual,
+                              marketcap=LOCO_prediction$market_cap)
+```
+
+
+```{r RICK}
+# load preproccessed data for a stock
+RICK <- data.table(fread("RICK.csv"))
+
+# calculate excess return = monthly return - risk-free rate
+RICK[,date:=as.Date(date, format = "%m/%d/%Y")]
+RICK[,excess_return:=return-RF]
+
+# seperate data before 2020 into training data set
+RICK_training <- subset(RICK,date<=DATE(2020,01,01))
+
+# regression on training data set on Fama-French 3 Factor model
+reg_RICK <- lm(excess_return ~ Mkt_RF + SMB + HML, data=RICK)
+
+# store beta for each stock
+RICK_beta_MKT <- as.vector(reg_RICK$coefficients[2])
+RICK_beta_SMB <- as.vector(reg_RICK$coefficients[3])
+RICK_beta_HML <- as.vector(reg_RICK$coefficients[4])
+
+# use model to predict 2020 excess returns
+RICK_prediction <- subset(RICK,date>=DATE(2020,1,1))
+RICK_pred <- as.data.frame(predict(reg_RICK,RICK_prediction,interval="prediction"))
+
+# calculate residual and crMCDe a table for the result
+RICK_date <- subset(RICK,date>=DATE(2020,1,1))$date
+RICK_actual_return <- subset(RICK,date>=DATE(2020,1,1))$excess_return
+
+RICK_result <- data.frame(date = RICK_date,
+                          actual_return = RICK_actual_return,
+                          predict_return = RICK_pred$fit)
+
+RICK_result$residual <- RICK_result$actual_return - RICK_result$predict_return
+
+# a table for beta & residual data
+RICK_parameters <- data.frame(date=RICK_date,
+                              ticker="RICK",
+                              beta_MKT=RICK_beta_MKT,
+                              beta_SMB=RICK_beta_SMB,
+                              beta_HML=RICK_beta_HML,
+                              residual=RICK_result$residual,
+                              marketcap=RICK_prediction$market_cap)
+```
+
+
+```{r RRGB}
+# load preproccessed data for a stock
+RRGB <- data.table(fread("RRGB.csv"))
+
+# calculate excess return = monthly return - risk-free rate
+RRGB[,date:=as.Date(date, format = "%m/%d/%Y")]
+RRGB[,excess_return:=return-RF]
+
+# seperate data before 2020 into training data set
+RRGB_training <- subset(RRGB,date<=DATE(2020,01,01))
+
+# regression on training data set on Fama-French 3 Factor model
+reg_RRGB <- lm(excess_return ~ Mkt_RF + SMB + HML, data=RRGB)
+
+# store beta for each stock
+RRGB_beta_MKT <- as.vector(reg_RRGB$coefficients[2])
+RRGB_beta_SMB <- as.vector(reg_RRGB$coefficients[3])
+RRGB_beta_HML <- as.vector(reg_RRGB$coefficients[4])
+
+# use model to predict 2020 excess returns
+RRGB_prediction <- subset(RRGB,date>=DATE(2020,1,1))
+RRGB_pred <- as.data.frame(predict(reg_RRGB,RRGB_prediction,interval="prediction"))
+
+# calculate residual and crMCDe a table for the result
+RRGB_date <- subset(RRGB,date>=DATE(2020,1,1))$date
+RRGB_actual_return <- subset(RRGB,date>=DATE(2020,1,1))$excess_return
+
+RRGB_result <- data.frame(date = RRGB_date,
+                          actual_return = RRGB_actual_return,
+                          predict_return = RRGB_pred$fit)
+
+RRGB_result$residual <- RRGB_result$actual_return - RRGB_result$predict_return
+
+# a table for beta & residual data
+RRGB_parameters <- data.frame(date=RRGB_date,
+                              ticker="RRGB",
+                              beta_MKT=RRGB_beta_MKT,
+                              beta_SMB=RRGB_beta_SMB,
+                              beta_HML=RRGB_beta_HML,
+                              residual=RRGB_result$residual,
+                              marketcap=RRGB_prediction$market_cap)
+```
+
+
+```{r NDLS}
+# load preproccessed data for a stock
+NDLS <- data.table(fread("NDLS.csv"))
+
+# calculate excess return = monthly return - risk-free rate
+NDLS[,date:=as.Date(date, format = "%m/%d/%Y")]
+NDLS[,excess_return:=return-RF]
+
+# seperate data before 2020 into training data set
+NDLS_training <- subset(NDLS,date<=DATE(2020,01,01))
+
+# regression on training data set on Fama-French 3 Factor model
+reg_NDLS <- lm(excess_return ~ Mkt_RF + SMB + HML, data=NDLS)
+
+# store beta for each stock
+NDLS_beta_MKT <- as.vector(reg_NDLS$coefficients[2])
+NDLS_beta_SMB <- as.vector(reg_NDLS$coefficients[3])
+NDLS_beta_HML <- as.vector(reg_NDLS$coefficients[4])
+
+# use model to predict 2020 excess returns
+NDLS_prediction <- subset(NDLS,date>=DATE(2020,1,1))
+NDLS_pred <- as.data.frame(predict(reg_NDLS,NDLS_prediction,interval="prediction"))
+
+# calculate residual and crMCDe a table for the result
+NDLS_date <- subset(NDLS,date>=DATE(2020,1,1))$date
+NDLS_actual_return <- subset(NDLS,date>=DATE(2020,1,1))$excess_return
+
+NDLS_result <- data.frame(date = NDLS_date,
+                          actual_return = NDLS_actual_return,
+                          predict_return = NDLS_pred$fit)
+
+NDLS_result$residual <- NDLS_result$actual_return - NDLS_result$predict_return
+
+# a table for beta & residual data
+NDLS_parameters <- data.frame(date=NDLS_date,
+                              ticker="NDLS",
+                              beta_MKT=NDLS_beta_MKT,
+                              beta_SMB=NDLS_beta_SMB,
+                              beta_HML=NDLS_beta_HML,
+                              residual=NDLS_result$residual,
+                              marketcap=NDLS_prediction$market_cap)
+```
+
+
+```{r BH}
+# load preproccessed data for a stock
+BH <- data.table(fread("BH.csv"))
+
+# calculate excess return = monthly return - risk-free rate
+BH[,date:=as.Date(date, format = "%m/%d/%Y")]
+BH[,excess_return:=return-RF]
+
+# seperate data before 2020 into training data set
+BH_training <- subset(BH,date<=DATE(2020,01,01))
+
+# regression on training data set on Fama-French 3 Factor model
+reg_BH <- lm(excess_return ~ Mkt_RF + SMB + HML, data=BH)
+
+# store beta for each stock
+BH_beta_MKT <- as.vector(reg_BH$coefficients[2])
+BH_beta_SMB <- as.vector(reg_BH$coefficients[3])
+BH_beta_HML <- as.vector(reg_BH$coefficients[4])
+
+# use model to predict 2020 excess returns
+BH_prediction <- subset(BH,date>=DATE(2020,1,1))
+BH_pred <- as.data.frame(predict(reg_BH,BH_prediction,interval="prediction"))
+
+# calculate residual and crMCDe a table for the result
+BH_date <- subset(BH,date>=DATE(2020,1,1))$date
+BH_actual_return <- subset(BH,date>=DATE(2020,1,1))$excess_return
+
+BH_result <- data.frame(date = BH_date,
+                          actual_return = BH_actual_return,
+                          predict_return = BH_pred$fit)
+
+BH_result$residual <- BH_result$actual_return - BH_result$predict_return
+
+# a table for beta & residual data
+BH_parameters <- data.frame(date=BH_date,
+                              ticker="BH",
+                              beta_MKT=BH_beta_MKT,
+                              beta_SMB=BH_beta_SMB,
+                              beta_HML=BH_beta_HML,
+                              residual=BH_result$residual,
+                              marketcap=BH_prediction$market_cap)
+```
+
+
+```{r TACO}
+# load preproccessed data for a stock
+TACO <- data.table(fread("TACO.csv"))
+
+# calculate excess return = monthly return - risk-free rate
+TACO[,date:=as.Date(date, format = "%m/%d/%Y")]
+TACO[,excess_return:=return-RF]
+
+# seperate data before 2020 into training data set
+TACO_training <- subset(TACO,date<=DATE(2020,01,01))
+
+# regression on training data set on Fama-French 3 Factor model
+reg_TACO <- lm(excess_return ~ Mkt_RF + SMB + HML, data=TACO)
+
+# store beta for each stock
+TACO_beta_MKT <- as.vector(reg_TACO$coefficients[2])
+TACO_beta_SMB <- as.vector(reg_TACO$coefficients[3])
+TACO_beta_HML <- as.vector(reg_TACO$coefficients[4])
+
+# use model to predict 2020 excess returns
+TACO_prediction <- subset(TACO,date>=DATE(2020,1,1))
+TACO_pred <- as.data.frame(predict(reg_TACO,TACO_prediction,interval="prediction"))
+
+# calculate residual and crMCDe a table for the result
+TACO_date <- subset(TACO,date>=DATE(2020,1,1))$date
+TACO_actual_return <- subset(TACO,date>=DATE(2020,1,1))$excess_return
+
+TACO_result <- data.frame(date = TACO_date,
+                          actual_return = TACO_actual_return,
+                          predict_return = TACO_pred$fit)
+
+TACO_result$residual <- TACO_result$actual_return - TACO_result$predict_return
+
+# a table for beta & residual data
+TACO_parameters <- data.frame(date=TACO_date,
+                              ticker="TACO",
+                              beta_MKT=TACO_beta_MKT,
+                              beta_SMB=TACO_beta_SMB,
+                              beta_HML=TACO_beta_HML,
+                              residual=TACO_result$residual,
+                              marketcap=TACO_prediction$market_cap)
+```
+
+
+```{r FRGI}
+# load preproccessed data for a stock
+FRGI <- data.table(fread("FRGI.csv"))
+
+# calculate excess return = monthly return - risk-free rate
+FRGI[,date:=as.Date(date, format = "%m/%d/%Y")]
+FRGI[,excess_return:=return-RF]
+
+# seperate data before 2020 into training data set
+FRGI_training <- subset(FRGI,date<=DATE(2020,01,01))
+
+# regression on training data set on Fama-French 3 Factor model
+reg_FRGI <- lm(excess_return ~ Mkt_RF + SMB + HML, data=FRGI)
+
+# store beta for each stock
+FRGI_beta_MKT <- as.vector(reg_FRGI$coefficients[2])
+FRGI_beta_SMB <- as.vector(reg_FRGI$coefficients[3])
+FRGI_beta_HML <- as.vector(reg_FRGI$coefficients[4])
+
+# use model to predict 2020 excess returns
+FRGI_prediction <- subset(FRGI,date>=DATE(2020,1,1))
+FRGI_pred <- as.data.frame(predict(reg_FRGI,FRGI_prediction,interval="prediction"))
+
+# calculate residual and crMCDe a table for the result
+FRGI_date <- subset(FRGI,date>=DATE(2020,1,1))$date
+FRGI_actual_return <- subset(FRGI,date>=DATE(2020,1,1))$excess_return
+
+FRGI_result <- data.frame(date = FRGI_date,
+                          actual_return = FRGI_actual_return,
+                          predict_return = FRGI_pred$fit)
+
+FRGI_result$residual <- FRGI_result$actual_return - FRGI_result$predict_return
+
+# a table for beta & residual data
+FRGI_parameters <- data.frame(date=FRGI_date,
+                              ticker="FRGI",
+                              beta_MKT=FRGI_beta_MKT,
+                              beta_SMB=FRGI_beta_SMB,
+                              beta_HML=FRGI_beta_HML,
+                              residual=FRGI_result$residual,
+                              marketcap=FRGI_prediction$market_cap)
+```
+
+
+```{r TAST}
+# load preproccessed data for a stock
+TAST <- data.table(fread("TAST.csv"))
+
+# calculate excess return = monthly return - risk-free rate
+TAST[,date:=as.Date(date, format = "%m/%d/%Y")]
+TAST[,excess_return:=return-RF]
+
+# seperate data before 2020 into training data set
+TAST_training <- subset(TAST,date<=DATE(2020,01,01))
+
+# regression on training data set on Fama-French 3 Factor model
+reg_TAST <- lm(excess_return ~ Mkt_RF + SMB + HML, data=TAST)
+
+# store beta for each stock
+TAST_beta_MKT <- as.vector(reg_TAST$coefficients[2])
+TAST_beta_SMB <- as.vector(reg_TAST$coefficients[3])
+TAST_beta_HML <- as.vector(reg_TAST$coefficients[4])
+
+# use model to predict 2020 excess returns
+TAST_prediction <- subset(TAST,date>=DATE(2020,1,1))
+TAST_pred <- as.data.frame(predict(reg_TAST,TAST_prediction,interval="prediction"))
+
+# calculate residual and crMCDe a table for the result
+TAST_date <- subset(TAST,date>=DATE(2020,1,1))$date
+TAST_actual_return <- subset(TAST,date>=DATE(2020,1,1))$excess_return
+
+TAST_result <- data.frame(date = TAST_date,
+                          actual_return = TAST_actual_return,
+                          predict_return = TAST_pred$fit)
+
+TAST_result$residual <- TAST_result$actual_return - TAST_result$predict_return
+
+# a table for beta & residual data
+TAST_parameters <- data.frame(date=TAST_date,
+                              ticker="TAST",
+                              beta_MKT=TAST_beta_MKT,
+                              beta_SMB=TAST_beta_SMB,
+                              beta_HML=TAST_beta_HML,
+                              residual=TAST_result$residual,
+                              marketcap=TAST_prediction$market_cap)
+```
+
+
+```{r NATH}
+# load preproccessed data for a stock
+NATH <- data.table(fread("NATH.csv"))
+
+# calculate excess return = monthly return - risk-free rate
+NATH[,date:=as.Date(date, format = "%m/%d/%Y")]
+NATH[,excess_return:=return-RF]
+
+# seperate data before 2020 into training data set
+NATH_training <- subset(NATH,date<=DATE(2020,01,01))
+
+# regression on training data set on Fama-French 3 Factor model
+reg_NATH <- lm(excess_return ~ Mkt_RF + SMB + HML, data=NATH)
+
+# store beta for each stock
+NATH_beta_MKT <- as.vector(reg_NATH$coefficients[2])
+NATH_beta_SMB <- as.vector(reg_NATH$coefficients[3])
+NATH_beta_HML <- as.vector(reg_NATH$coefficients[4])
+
+# use model to predict 2020 excess returns
+NATH_prediction <- subset(NATH,date>=DATE(2020,1,1))
+NATH_pred <- as.data.frame(predict(reg_NATH,NATH_prediction,interval="prediction"))
+
+# calculate residual and crMCDe a table for the result
+NATH_date <- subset(NATH,date>=DATE(2020,1,1))$date
+NATH_actual_return <- subset(NATH,date>=DATE(2020,1,1))$excess_return
+
+NATH_result <- data.frame(date = NATH_date,
+                          actual_return = NATH_actual_return,
+                          predict_return = NATH_pred$fit)
+
+NATH_result$residual <- NATH_result$actual_return - NATH_result$predict_return
+
+# a table for beta & residual data
+NATH_parameters <- data.frame(date=NATH_date,
+                              ticker="NATH",
+                              beta_MKT=NATH_beta_MKT,
+                              beta_SMB=NATH_beta_SMB,
+                              beta_HML=NATH_beta_HML,
+                              residual=NATH_result$residual,
+                              marketcap=NATH_prediction$market_cap)
+```
+
+
+```{r STKS}
+# load preproccessed data for a stock
+STKS <- data.table(fread("STKS.csv"))
+
+# calculate excess return = monthly return - risk-free rate
+STKS[,date:=as.Date(date, format = "%m/%d/%Y")]
+STKS[,excess_return:=return-RF]
+
+# seperate data before 2020 into training data set
+STKS_training <- subset(STKS,date<=DATE(2020,01,01))
+
+# regression on training data set on Fama-French 3 Factor model
+reg_STKS <- lm(excess_return ~ Mkt_RF + SMB + HML, data=STKS)
+
+# store beta for each stock
+STKS_beta_MKT <- as.vector(reg_STKS$coefficients[2])
+STKS_beta_SMB <- as.vector(reg_STKS$coefficients[3])
+STKS_beta_HML <- as.vector(reg_STKS$coefficients[4])
+
+# use model to predict 2020 excess returns
+STKS_prediction <- subset(STKS,date>=DATE(2020,1,1))
+STKS_pred <- as.data.frame(predict(reg_STKS,STKS_prediction,interval="prediction"))
+
+# calculate residual and crMCDe a table for the result
+STKS_date <- subset(STKS,date>=DATE(2020,1,1))$date
+STKS_actual_return <- subset(STKS,date>=DATE(2020,1,1))$excess_return
+
+STKS_result <- data.frame(date = STKS_date,
+                          actual_return = STKS_actual_return,
+                          predict_return = STKS_pred$fit)
+
+STKS_result$residual <- STKS_result$actual_return - STKS_result$predict_return
+
+# a table for beta & residual data
+STKS_parameters <- data.frame(date=STKS_date,
+                              ticker="STKS",
+                              beta_MKT=STKS_beta_MKT,
+                              beta_SMB=STKS_beta_SMB,
+                              beta_HML=STKS_beta_HML,
+                              residual=STKS_result$residual,
+                              marketcap=STKS_prediction$market_cap)
+```
+
+
+```{r PBPB}
+# load preproccessed data for a stock
+PBPB <- data.table(fread("PBPB.csv"))
+
+# calculate excess return = monthly return - risk-free rate
+PBPB[,date:=as.Date(date, format = "%m/%d/%Y")]
+PBPB[,excess_return:=return-RF]
+
+# seperate data before 2020 into training data set
+PBPB_training <- subset(PBPB,date<=DATE(2020,01,01))
+
+# regression on training data set on Fama-French 3 Factor model
+reg_PBPB <- lm(excess_return ~ Mkt_RF + SMB + HML, data=PBPB)
+
+# store beta for each stock
+PBPB_beta_MKT <- as.vector(reg_PBPB$coefficients[2])
+PBPB_beta_SMB <- as.vector(reg_PBPB$coefficients[3])
+PBPB_beta_HML <- as.vector(reg_PBPB$coefficients[4])
+
+# use model to predict 2020 excess returns
+PBPB_prediction <- subset(PBPB,date>=DATE(2020,1,1))
+PBPB_pred <- as.data.frame(predict(reg_PBPB,PBPB_prediction,interval="prediction"))
+
+# calculate residual and crMCDe a table for the result
+PBPB_date <- subset(PBPB,date>=DATE(2020,1,1))$date
+PBPB_actual_return <- subset(PBPB,date>=DATE(2020,1,1))$excess_return
+
+PBPB_result <- data.frame(date = PBPB_date,
+                          actual_return = PBPB_actual_return,
+                          predict_return = PBPB_pred$fit)
+
+PBPB_result$residual <- PBPB_result$actual_return - PBPB_result$predict_return
+
+# a table for beta & residual data
+PBPB_parameters <- data.frame(date=PBPB_date,
+                              ticker="PBPB",
+                              beta_MKT=PBPB_beta_MKT,
+                              beta_SMB=PBPB_beta_SMB,
+                              beta_HML=PBPB_beta_HML,
+                              residual=PBPB_result$residual,
+                              marketcap=PBPB_prediction$market_cap)
+```
+
+
+```{r JAX}
+# load preproccessed data for a stock
+JAX <- data.table(fread("JAX.csv"))
+
+# calculate excess return = monthly return - risk-free rate
+JAX[,date:=as.Date(date, format = "%m/%d/%Y")]
+JAX[,excess_return:=return-RF]
+
+# seperate data before 2020 into training data set
+JAX_training <- subset(JAX,date<=DATE(2020,01,01))
+
+# regression on training data set on Fama-French 3 Factor model
+reg_JAX <- lm(excess_return ~ Mkt_RF + SMB + HML, data=JAX)
+
+# store beta for each stock
+JAX_beta_MKT <- as.vector(reg_JAX$coefficients[2])
+JAX_beta_SMB <- as.vector(reg_JAX$coefficients[3])
+JAX_beta_HML <- as.vector(reg_JAX$coefficients[4])
+
+# use model to predict 2020 excess returns
+JAX_prediction <- subset(JAX,date>=DATE(2020,1,1))
+JAX_pred <- as.data.frame(predict(reg_JAX,JAX_prediction,interval="prediction"))
+
+# calculate residual and crMCDe a table for the result
+JAX_date <- subset(JAX,date>=DATE(2020,1,1))$date
+JAX_actual_return <- subset(JAX,date>=DATE(2020,1,1))$excess_return
+
+JAX_result <- data.frame(date = JAX_date,
+                          actual_return = JAX_actual_return,
+                          predict_return = JAX_pred$fit)
+
+JAX_result$residual <- JAX_result$actual_return - JAX_result$predict_return
+
+# a table for beta & residual data
+JAX_parameters <- data.frame(date=JAX_date,
+                              ticker="JAX",
+                              beta_MKT=JAX_beta_MKT,
+                              beta_SMB=JAX_beta_SMB,
+                              beta_HML=JAX_beta_HML,
+                              residual=JAX_result$residual,
+                              marketcap=JAX_prediction$market_cap)
+```
+
+
+```{r LUB}
+# load preproccessed data for a stock
+LUB <- data.table(fread("LUB.csv"))
+
+# calculate excess return = monthly return - risk-free rate
+LUB[,date:=as.Date(date, format = "%m/%d/%Y")]
+LUB[,excess_return:=return-RF]
+
+# seperate data before 2020 into training data set
+LUB_training <- subset(LUB,date<=DATE(2020,01,01))
+
+# regression on training data set on Fama-French 3 Factor model
+reg_LUB <- lm(excess_return ~ Mkt_RF + SMB + HML, data=LUB)
+
+# store beta for each stock
+LUB_beta_MKT <- as.vector(reg_LUB$coefficients[2])
+LUB_beta_SMB <- as.vector(reg_LUB$coefficients[3])
+LUB_beta_HML <- as.vector(reg_LUB$coefficients[4])
+
+# use model to predict 2020 excess returns
+LUB_prediction <- subset(LUB,date>=DATE(2020,1,1))
+LUB_pred <- as.data.frame(predict(reg_LUB,LUB_prediction,interval="prediction"))
+
+# calculate residual and crMCDe a table for the result
+LUB_date <- subset(LUB,date>=DATE(2020,1,1))$date
+LUB_actual_return <- subset(LUB,date>=DATE(2020,1,1))$excess_return
+
+LUB_result <- data.frame(date = LUB_date,
+                          actual_return = LUB_actual_return,
+                          predict_return = LUB_pred$fit)
+
+LUB_result$residual <- LUB_result$actual_return - LUB_result$predict_return
+
+# a table for beta & residual data
+LUB_parameters <- data.frame(date=LUB_date,
+                              ticker="LUB",
+                              beta_MKT=LUB_beta_MKT,
+                              beta_SMB=LUB_beta_SMB,
+                              beta_HML=LUB_beta_HML,
+                              residual=LUB_result$residual,
+                              marketcap=LUB_prediction$market_cap)
+```
+
+
+```{r FAT}
+# load preproccessed data for a stock
+FAT <- data.table(fread("FAT.csv"))
+
+# calculate excess return = monthly return - risk-free rate
+FAT[,date:=as.Date(date, format = "%m/%d/%Y")]
+FAT[,excess_return:=return-RF]
+
+# seperate data before 2020 into training data set
+FAT_training <- subset(FAT,date<=DATE(2020,01,01))
+
+# regression on training data set on Fama-French 3 Factor model
+reg_FAT <- lm(excess_return ~ Mkt_RF + SMB + HML, data=FAT)
+
+# store beta for each stock
+FAT_beta_MKT <- as.vector(reg_FAT$coefficients[2])
+FAT_beta_SMB <- as.vector(reg_FAT$coefficients[3])
+FAT_beta_HML <- as.vector(reg_FAT$coefficients[4])
+
+# use model to predict 2020 excess returns
+FAT_prediction <- subset(FAT,date>=DATE(2020,1,1))
+FAT_pred <- as.data.frame(predict(reg_FAT,FAT_prediction,interval="prediction"))
+
+# calculate residual and crMCDe a table for the result
+FAT_date <- subset(FAT,date>=DATE(2020,1,1))$date
+FAT_actual_return <- subset(FAT,date>=DATE(2020,1,1))$excess_return
+
+FAT_result <- data.frame(date = FAT_date,
+                          actual_return = FAT_actual_return,
+                          predict_return = FAT_pred$fit)
+
+FAT_result$residual <- FAT_result$actual_return - FAT_result$predict_return
+
+# a table for beta & residual data
+FAT_parameters <- data.frame(date=FAT_date,
+                              ticker="FAT",
+                              beta_MKT=FAT_beta_MKT,
+                              beta_SMB=FAT_beta_SMB,
+                              beta_HML=FAT_beta_HML,
+                              residual=FAT_result$residual,
+                              marketcap=FAT_prediction$market_cap)
+```
+
+
+```{r ARKR}
+# load preproccessed data for a stock
+ARKR <- data.table(fread("ARKR.csv"))
+
+# calculate excess return = monthly return - risk-free rate
+ARKR[,date:=as.Date(date, format = "%m/%d/%Y")]
+ARKR[,excess_return:=return-RF]
+
+# seperate data before 2020 into training data set
+ARKR_training <- subset(ARKR,date<=DATE(2020,01,01))
+
+# regression on training data set on Fama-French 3 Factor model
+reg_ARKR <- lm(excess_return ~ Mkt_RF + SMB + HML, data=ARKR)
+
+# store beta for each stock
+ARKR_beta_MKT <- as.vector(reg_ARKR$coefficients[2])
+ARKR_beta_SMB <- as.vector(reg_ARKR$coefficients[3])
+ARKR_beta_HML <- as.vector(reg_ARKR$coefficients[4])
+
+# use model to predict 2020 excess returns
+ARKR_prediction <- subset(ARKR,date>=DATE(2020,1,1))
+ARKR_pred <- as.data.frame(predict(reg_ARKR,ARKR_prediction,interval="prediction"))
+
+# calculate residual and crMCDe a table for the result
+ARKR_date <- subset(ARKR,date>=DATE(2020,1,1))$date
+ARKR_actual_return <- subset(ARKR,date>=DATE(2020,1,1))$excess_return
+
+ARKR_result <- data.frame(date = ARKR_date,
+                          actual_return = ARKR_actual_return,
+                          predict_return = ARKR_pred$fit)
+
+ARKR_result$residual <- ARKR_result$actual_return - ARKR_result$predict_return
+
+# a table for beta & residual data
+ARKR_parameters <- data.frame(date=ARKR_date,
+                              ticker="ARKR",
+                              beta_MKT=ARKR_beta_MKT,
+                              beta_SMB=ARKR_beta_SMB,
+                              beta_HML=ARKR_beta_HML,
+                              residual=ARKR_result$residual,
+                              marketcap=ARKR_prediction$market_cap)
+```
+
+
+```{r GTIM}
+# load preproccessed data for a stock
+GTIM <- data.table(fread("GTIM.csv"))
+
+# calculate excess return = monthly return - risk-free rate
+GTIM[,date:=as.Date(date, format = "%m/%d/%Y")]
+GTIM[,excess_return:=return-RF]
+
+# seperate data before 2020 into training data set
+GTIM_training <- subset(GTIM,date<=DATE(2020,01,01))
+
+# regression on training data set on Fama-French 3 Factor model
+reg_GTIM <- lm(excess_return ~ Mkt_RF + SMB + HML, data=GTIM)
+
+# store beta for each stock
+GTIM_beta_MKT <- as.vector(reg_GTIM$coefficients[2])
+GTIM_beta_SMB <- as.vector(reg_GTIM$coefficients[3])
+GTIM_beta_HML <- as.vector(reg_GTIM$coefficients[4])
+
+# use model to predict 2020 excess returns
+GTIM_prediction <- subset(GTIM,date>=DATE(2020,1,1))
+GTIM_pred <- as.data.frame(predict(reg_GTIM,GTIM_prediction,interval="prediction"))
+
+# calculate residual and crMCDe a table for the result
+GTIM_date <- subset(GTIM,date>=DATE(2020,1,1))$date
+GTIM_actual_return <- subset(GTIM,date>=DATE(2020,1,1))$excess_return
+
+GTIM_result <- data.frame(date = GTIM_date,
+                          actual_return = GTIM_actual_return,
+                          predict_return = GTIM_pred$fit)
+
+GTIM_result$residual <- GTIM_result$actual_return - GTIM_result$predict_return
+
+# a table for beta & residual data
+GTIM_parameters <- data.frame(date=GTIM_date,
+                              ticker="GTIM",
+                              beta_MKT=GTIM_beta_MKT,
+                              beta_SMB=GTIM_beta_SMB,
+                              beta_HML=GTIM_beta_HML,
+                              residual=GTIM_result$residual,
+                              marketcap=GTIM_prediction$market_cap)
+```
+
+
+```{r BDL}
+# load preproccessed data for a stock
+BDL <- data.table(fread("BDL.csv"))
+
+# calculate excess return = monthly return - risk-free rate
+BDL[,date:=as.Date(date, format = "%m/%d/%Y")]
+BDL[,excess_return:=return-RF]
+
+# seperate data before 2020 into training data set
+BDL_training <- subset(BDL,date<=DATE(2020,01,01))
+
+# regression on training data set on Fama-French 3 Factor model
+reg_BDL <- lm(excess_return ~ Mkt_RF + SMB + HML, data=BDL)
+
+# store beta for each stock
+BDL_beta_MKT <- as.vector(reg_BDL$coefficients[2])
+BDL_beta_SMB <- as.vector(reg_BDL$coefficients[3])
+BDL_beta_HML <- as.vector(reg_BDL$coefficients[4])
+
+# use model to predict 2020 excess returns
+BDL_prediction <- subset(BDL,date>=DATE(2020,1,1))
+BDL_pred <- as.data.frame(predict(reg_BDL,BDL_prediction,interval="prediction"))
+
+# calculate residual and crMCDe a table for the result
+BDL_date <- subset(BDL,date>=DATE(2020,1,1))$date
+BDL_actual_return <- subset(BDL,date>=DATE(2020,1,1))$excess_return
+
+BDL_result <- data.frame(date = BDL_date,
+                          actual_return = BDL_actual_return,
+                          predict_return = BDL_pred$fit)
+
+BDL_result$residual <- BDL_result$actual_return - BDL_result$predict_return
+
+# a table for beta & residual data
+BDL_parameters <- data.frame(date=BDL_date,
+                              ticker="BDL",
+                              beta_MKT=BDL_beta_MKT,
+                              beta_SMB=BDL_beta_SMB,
+                              beta_HML=BDL_beta_HML,
+                              residual=BDL_result$residual,
+                              marketcap=BDL_prediction$market_cap)
+```
+
+
+```{r RAVE}
+# load preproccessed data for a stock
+RAVE <- data.table(fread("RAVE.csv"))
+
+# calculate excess return = monthly return - risk-free rate
+RAVE[,date:=as.Date(date, format = "%m/%d/%Y")]
+RAVE[,excess_return:=return-RF]
+
+# seperate data before 2020 into training data set
+RAVE_training <- subset(RAVE,date<=DATE(2020,01,01))
+
+# regression on training data set on Fama-French 3 Factor model
+reg_RAVE <- lm(excess_return ~ Mkt_RF + SMB + HML, data=RAVE)
+
+# store beta for each stock
+RAVE_beta_MKT <- as.vector(reg_RAVE$coefficients[2])
+RAVE_beta_SMB <- as.vector(reg_RAVE$coefficients[3])
+RAVE_beta_HML <- as.vector(reg_RAVE$coefficients[4])
+
+# use model to predict 2020 excess returns
+RAVE_prediction <- subset(RAVE,date>=DATE(2020,1,1))
+RAVE_pred <- as.data.frame(predict(reg_RAVE,RAVE_prediction,interval="prediction"))
+
+# calculate residual and crMCDe a table for the result
+RAVE_date <- subset(RAVE,date>=DATE(2020,1,1))$date
+RAVE_actual_return <- subset(RAVE,date>=DATE(2020,1,1))$excess_return
+
+RAVE_result <- data.frame(date = RAVE_date,
+                          actual_return = RAVE_actual_return,
+                          predict_return = RAVE_pred$fit)
+
+RAVE_result$residual <- RAVE_result$actual_return - RAVE_result$predict_return
+
+# a table for beta & residual data
+RAVE_parameters <- data.frame(date=RAVE_date,
+                              ticker="RAVE",
+                              beta_MKT=RAVE_beta_MKT,
+                              beta_SMB=RAVE_beta_SMB,
+                              beta_HML=RAVE_beta_HML,
+                              residual=RAVE_result$residual,
+                              marketcap=RAVE_prediction$market_cap)
+```
+
+
+```{r Merge all small cap}
+# combine the results into a single table
+Small_Cap <- rbind(DIN_parameters,BJRI_parameters,DENN_parameters,ARCO_parameters,CHUY_parameters,
+                 RUTH_parameters,LOCO_parameters,RICK_parameters,RRGB_parameters,NDLS_parameters,BH_parameters,TACO_parameters,FRGI_parameters,
+                 TAST_parameters,NATH_parameters,STKS_parameters,PBPB_parameters,JAX_parameters,LUB_parameters,FAT_parameters,ARKR_parameters,
+                 GTIM_parameters,BDL_parameters,RAVE_parameters)
+Small_Cap
+```
+
+## Model
+```{r Parsing the quarter for each month}
+Large_Cap$Q <- 0
+
+# Setting the quarter number for each rows
+for(i in 1:nrow(Large_Cap)){
+  if(as.numeric(as.character(substr(Large_Cap$date[i],6,6))) == 1){
+    Large_Cap$Q[i] <- 4
+  } else if(as.numeric(as.character(substr(Large_Cap$date[i],7,7))) >= 7){
+    Large_Cap$Q[i] <- 3
+  } else if((as.numeric(as.character(substr(Large_Cap$date[i],7,7))) > 3) & (as.numeric(as.character(substr(Large_Cap$date[i],7,7)) < 7))){
+    Large_Cap$Q[i] <- 2
+  } else {
+    Large_Cap$Q[i] <- 1
+  }
+}
+
+Mid_Cap$Q <- 0
+
+# Setting the quarter number for each rows
+for(i in 1:nrow(Mid_Cap)){
+  if(as.numeric(as.character(substr(Mid_Cap$date[i],6,6))) == 1){
+    Mid_Cap$Q[i] <- 4
+  } else if(as.numeric(as.character(substr(Mid_Cap$date[i],7,7))) >= 7){
+    Mid_Cap$Q[i] <- 3
+  } else if((as.numeric(as.character(substr(Mid_Cap$date[i],7,7))) > 3) & (as.numeric(as.character(substr(Mid_Cap$date[i],7,7)) < 7))){
+    Mid_Cap$Q[i] <- 2
+  } else {
+    Mid_Cap$Q[i] <- 1
+  }
+}
+
+Small_Cap$Q <- 0
+
+# Setting the quarter number for each rows
+for(i in 1:nrow(Small_Cap)){
+  if(as.numeric(as.character(substr(Small_Cap$date[i],6,6))) == 1){
+    Small_Cap$Q[i] <- 4
+  } else if(as.numeric(as.character(substr(Small_Cap$date[i],7,7))) >= 7){
+    Small_Cap$Q[i] <- 3
+  } else if((as.numeric(as.character(substr(Small_Cap$date[i],7,7))) > 3) & (as.numeric(as.character(substr(Small_Cap$date[i],7,7)) < 7))){
+    Small_Cap$Q[i] <- 2
+  } else {
+    Small_Cap$Q[i] <- 1
+  }
+}
+```
+
+
+```{r Summing the residuals based on quarter}
+# Grouping the tickers by their quarters and summing the residuals to get quarterly residuals
+dataL <- Large_Cap %>% 
+        group_by(ticker, Q) %>% 
+        summarise(quarterly.residuals = sum(residual)) 
+
+dataM <- Mid_Cap %>% 
+        group_by(ticker, Q) %>% 
+        summarise(quarterly.residuals = sum(residual))
+
+dataS <- Small_Cap %>% 
+        group_by(ticker, Q) %>% 
+        summarise(quarterly.residuals = sum(residual))
+
+dataL$marketcap <- "large"
+dataM$marketcap <- "mid"
+dataS$marketcap <- "small"
+
+data <- rbind(dataL, dataM, dataS)
+```
+
+
+```{r Loading Financial Ratio CSV}
+# Loading the financial ratio csv
+ratio <- data.table(fread("Financial Ratio.csv"))
+
+# Formatting the date variable
+ratio$public_date <- as.Date(ratio$public_date, format = "%m/%d/%Y") 
+
+ratio$Q <- 0
+
+# Setting the quarter number for each rows
+for(i in 1:nrow(ratio)){
+  if(as.numeric(as.character(substr(ratio$public_date[i],6,6))) == 1){
+    ratio$Q[i] <- 4
+  } else if(as.numeric(as.character(substr(ratio$public_date[i],7,7))) >= 7){
+    ratio$Q[i] <- 3
+  } else if((as.numeric(as.character(substr(ratio$public_date[i],7,7))) > 3) & (as.numeric(as.character(substr(ratio$public_date[i],7,7)) < 7))){
+    ratio$Q[i] <- 2
+  } else {
+    ratio$Q[i] <- 1
+  }
+}
+```
+
+
+```{r Cleaning Financial Ratio data}
+# Formatting the date variable
+ratio$qdate <- as.Date(ratio$qdate, format = "%m/%d/%Y")
+
+# Selecting financial ratio after/on the date, 31st Dec 2019
+ratioa <- ratio[(ratio$qdate >= as.Date("2019-12-31"))]
+
+# Removing duplicates due to changes in P/E and P/B
+ratioa <- ratioa %>% 
+        group_by(permno) %>% 
+        filter(!duplicated(qdate))
+```
+
+
+```{r Combining the residuals table and financial ratio table}
+# Left join using ticker and quarter number as primary key
+finaldata <- left_join(data, ratioa, by = c("ticker","Q"))
+```
+
+
+```{r First Model: Linear Regression}
+# Using the financial ratios from the five financial ratios analysis, quarter number, and market cap as the independent variables for the quarterly residuals
+full.model1 <- lm(quarterly.residuals ~ Q + factor(marketcap) + npm + gpm + roa + roe + roce + capital_ratio + int_debt + debt_ebitda + debt_assets + debt_capital + de_ratio + intcov + cash_ratio + quick_ratio + curr_ratio + inv_turn ,data = finaldata)
+summary(full.model1)
+```
+
+
+```{r Second Model: Stepwise Regression}
+# Using model1's financial ratios with no missing values and market cap as the independent variables for the quarterly residuals
+full.model2 <- lm(quarterly.residuals ~ factor(marketcap) + debt_assets + debt_at + de_ratio + gpm + npm + roa + curr_ratio + quick_ratio + cash_ratio + rect_turn + at_turn, data = finaldata)
+
+# Stepwise regression model
+step.model <- stepAIC(full.model2, direction = "both")
+
+summary(step.model)
+```
+
+
+```{r Third Model: Stepwise Regression}
+# Using all financial ratios with no missing values and market cap as the independent variables for the quarterly residuals
+full.model3 <- lm(quarterly.residuals ~ factor(marketcap) + npm + opmad + opmbd + gpm + ptpm + cfm + roa + aftret_eq + aftret_equity + GProf + equity_invcap
+                   + debt_invcap + totdebt_invcap + capital_ratio + cash_lt + debt_at + rect_act + debt_ebitda + short_debt + curr_debt + lt_debt + profit_lct
+                   + ocf_lct + cash_debt + lt_ppent + debt_assets + debt_capital + de_ratio + cash_ratio + quick_ratio + curr_ratio + at_turn + rect_turn
+                   + sale_invcap + rd_sale + adv_sale + staff_sale + accrual, data = finaldata)
+
+# Stepwise regression model
+step.model2 <- stepAIC(full.model3, direction = "both")
+
+summary(step.model2)
+```
+
+## Principal Component Analysis: Second Model
+```{r Setting up data for Principal Component Analysis: Second Model}
+# setting initial data frame
+finaldata.test <- as.data.frame(0)
+
+# Selecting the variables in the second model
+finaldata.test <- cbind.data.frame(finaldata$quarterly.residuals,finaldata$debt_at,finaldata$roa,finaldata$quick_ratio,finaldata$cash_ratio,finaldata$rect_turn,finaldata$marketcap)
+
+# Removing NA
+finaldata.test <- na.omit(finaldata.test)
+
+# Naming the columns
+colnames(finaldata.test) <- c("Residuals","Total Debt to Total Assets","Return on Assets","Quick Ratio","Cash Ratio","Receivables Turnover","Market Cap")
+```
+
+
+```{r First Observation: Principal Component Analysis}
+# Fitting the variables to PCA model
+finaldata.pca <- prcomp(finaldata.test[,c(1:6)], center = TRUE, scale = TRUE)
+
+# Summary of Principal Component Analysis
+summary(finaldata.pca)
+
+# Principal Component Analysis without grouping
+ggbiplot(finaldata.pca, labels = rownames(finaldata.pca))
+```
+
+
+```{r Second Observation: Principal Component Analysis}
+# Grouping based on market cap
+finaldata.group <- finaldata.test$`Market Cap`
+
+# Principal Component Analysis with grouping
+ggbiplot(finaldata.pca, ellipse = TRUE, labels = rownames(finaldata.pca), groups = finaldata.group)
+```
+
+
+```{r Third Observation: Principal Component Analysis}
+# Principal Component Analysis with grouping on PC3 and PC4
+ggbiplot(finaldata.pca, ellipse = TRUE, choices = c(3,4), labels = rownames(finaldata.pca), groups = finaldata.group)
+```
+
+
+```{r Fourth Observation: Principal Component Analysis}
+# Principal Component Analysis with grouping on PC5 and PC6
+ggbiplot(finaldata.pca, ellipse = TRUE, choices = c(5,6), labels = rownames(finaldata.pca), groups = finaldata.group)
+```
+
+
+## Principal Component Analysis: Third Model
+```{r Setting up data for Principal Component Analysis: Third Model}
+# setting initial data frame
+finaldata.test2 <- as.data.frame(0)
+
+# Selecting the variables in the third model
+finaldata.test2 <- cbind.data.frame(finaldata$quarterly.residuals,finaldata$npm,finaldata$opmad,finaldata$opmbd,finaldata$cfm,finaldata$GProf,finaldata$debt_at,
+                                    finaldata$debt_ebitda,finaldata$curr_debt,finaldata$profit_lct,finaldata$ocf_lct,finaldata$debt_capital,finaldata$de_ratio,
+                                    finaldata$quick_ratio,finaldata$at_turn,finaldata$sale_invcap,finaldata$accrual,finaldata$marketcap)
+
+# Removing NA
+finaldata.test2 <- na.omit(finaldata.test2)
+
+# Naming the columns
+colnames(finaldata.test2) <- c("Residuals","NPM","OPMAD","OPMBD","CFM","GProf","DEBT_AT","DEBT_EBITDA","CURR_DEBT","PROFIT_LCT","OCT_LCT","DEBT_CAPITAL","DE_RATIO","QUICK_RATIO","AT_TURN","SALE_INVCAP","ACCRUAL","Market Cap")
+```
+
+
+```{r First Observation: Principal Component Analysis}
+# Fitting the variables to PCA model
+finaldata2.pca <- prcomp(finaldata.test2[,c(1:17)], center = TRUE, scale = TRUE)
+
+# Summary of Principal Component Analysis
+summary(finaldata2.pca)
+
+# Principal Component Analysis without grouping
+ggbiplot(finaldata2.pca, labels = rownames(finaldata2.pca))
+```
+
+
+```{r Second Observation: Principal Component Analysis}
+# Grouping based on market cap
+finaldata2.group <- finaldata.test2$`Market Cap`
+
+# Principal Component Analysis with grouping
+ggbiplot(finaldata2.pca, ellipse = TRUE, labels = rownames(finaldata2.pca), groups = finaldata2.group)
+```
+
+
+```{r Third Observation: Principal Component Analysis}
+# Principal Component Analysis with grouping on PC3 and PC4
+ggbiplot(finaldata2.pca, ellipse = TRUE, choices = c(3,4), labels = rownames(finaldata2.pca), groups = finaldata2.group)
+```
+
+
+```{r Fourth Observation: Principal Component Analysis}
+# Principal Component Analysis with grouping on PC5 and PC6
+ggbiplot(finaldata2.pca, ellipse = TRUE, choices = c(5,6), labels = rownames(finaldata2.pca), groups = finaldata2.group)
+```
+
+
+```{r Fifth Observation: Principal Component Analysis}
+# Principal Component Analysis with grouping on PC7 and PC8
+ggbiplot(finaldata2.pca, ellipse = TRUE, choices = c(7,8), labels = rownames(finaldata2.pca), groups = finaldata2.group)
+```
+
+
+```{r Sixth Observation: Principal Component Analysis}
+# Principal Component Analysis with grouping on PC9 and PC10
+ggbiplot(finaldata2.pca, ellipse = TRUE, choices = c(9,10), labels = rownames(finaldata2.pca), groups = finaldata2.group)
+```
+
+
+```{r Seventh Observation: Principal Component Analysis}
+# Principal Component Analysis with grouping on PC11 and PC12
+ggbiplot(finaldata2.pca, ellipse = TRUE, choices = c(11,12), labels = rownames(finaldata2.pca), groups = finaldata2.group)
+```
+
+
+```{r Eighth Observation: Principal Component Analysis}
+# Principal Component Analysis with grouping on PC13 and PC14
+ggbiplot(finaldata2.pca, ellipse = TRUE, choices = c(13,14), labels = rownames(finaldata2.pca), groups = finaldata2.group)
+```
+
+
+```{r Ninth Observation: Principal Component Analysis}
+# Principal Component Analysis with grouping on PC15 and PC16
+ggbiplot(finaldata2.pca, ellipse = TRUE, choices = c(15,16), labels = rownames(finaldata2.pca), groups = finaldata2.group)
+```
+
